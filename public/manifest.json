@@ -1,0 +1,22 @@
+{
+  "short_name": "DRUG-CHECK NCB",
+  "name": "DRUG-CHECK: Field-Kit Colorimetric Analysis & Evidentiary Chain-of-Custody Portal",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0B1120",
+  "theme_color": "#0F172A",
+  "display": "standalone",
+  "orientation": "portrait",
+  "description": "Official Narcotics Control Bureau (NCB) Presumptive Field-Kit Colorimetric Analysis and Evidentiary Custody Portal"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "DRUG-CHECK: NCB Field-Kit Colorimetric Analysis & Evidentiary Portal",
+  "description": "Official Narcotics Control Bureau (NCB) & Police ANTF presumptive field-kit colorimetric analysis, white-balance calibration, optical spectral verification, and cryptographic chain-of-custody evidentiary portal under the NDPS Act 1985 / BNSS 2023.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
