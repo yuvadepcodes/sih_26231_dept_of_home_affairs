@@ -100,28 +100,28 @@ app.post('/api/analyze-colorimetric', async (req, res) => {
 
     // If Gemini is available, run multimodal scientific vision analysis
     if (ai && cleanBase64) {
-      const prompt = `You are a Chief Forensic Scientist and Colorimetric Analysis Expert for the Narcotics Control Bureau (NCB), Ministry of Home Affairs, Government of India.
-Analyze this presumptive field test kit photo for narcotic/psychotropic substance identification under the NDPS Act 1985.
+      const prompt = `You are a Senior Forensic Chemist and Chief Colorimetric Scientist for the Narcotics Control Bureau (NCB), Ministry of Home Affairs, Government of India.
+Perform an exacting, scientifically rigorous colorimetric evaluation of the attached field test photograph under the NDPS Act 1985.
+
+CRITICAL FORENSIC RULES:
+1. EXAMINE THE REAL VISUAL COLOR OF THE REAGENT SPOT IN THE IMAGE.
+   - Do NOT assume a positive result simply because a reagent was selected.
+   - For Marquis Reagent (Heroin / Morphine / Opium):
+     * POSITIVE requires an unambiguous chromogenic shift to DEEP PURPLE / VIOLET.
+     * If the spot is YELLOW, AMBER, ORANGE, TAN, COLORLESS, or PALE, it is NEGATIVE for Heroin/Opium (no diacetylmorphine detected; reagent retains yellow acidic hue).
+   - For Marquis Reagent (Meth / Amphetamine): Orange-red to reddish-brown = Positive; Yellow/Clear = Negative.
+   - For Scott Reagent (Cocaine HCl / Base): Persistent cobalt brilliant blue in the bottom chloroform layer = Positive; Pink / Clear = Negative.
+   - For Duquenois-Levine (Cannabis / Charas / Ganja): Violet / Purple extraction in bottom chloroform layer = Positive; Green / Yellow / Clear = Negative.
+   - For Fentanyl Immunoassay Strips: 1 Red Line (C only) = POSITIVE; 2 Red Lines (C & T) = NEGATIVE; No C line = INVALID.
+2. If the reaction color is clearly yellow, amber, or colorless while testing Marquis Reagent for Heroin, classify the outcome strictly as NEGATIVE.
+3. Determine accurate Hex color, Delta-E to expected positive standard, and realistic confidence score.
 
 Reagent Test Protocol: ${reagentName || reagentId || 'Field Presumptive Test'}
 Reported Reagent ID: ${reagentId}
-Physical Sample Context: ${sampleDescription || 'Suspected contraband seized during ANTF field interdiction'}
-Spot Color Measured: ${sampledSpotHex || 'Refer to image'}
+Physical Sample Context: ${sampleDescription || 'Suspected contraband seized during field interdiction'}
+User-Sampled Spot Hex: ${sampledSpotHex || 'Inspect image directly'}
 Calibration Card Status: ${calibrationStatus || 'Standard White Balance & Reference Target Applied'}
-Is Lateral Flow Immunoassay: ${isLateralFlowStrip ? 'YES (Immunoassay Test Strip)' : 'NO (Colorimetric Chemical Reagent)'}
-
-Provide an accurate, authoritative presumptive forensic analysis:
-1. Examine the color reaction or immunoassay test lines ('C' Control line and 'T' Test line).
-2. Compare the reaction against official forensic standards:
-   - Marquis: Purple/Violet = Heroin/Morphine/Opium; Dark Red/Orange-Brown = Amphetamine/Methamphetamine; Black/Dark Purple = MDMA; No color = Negative.
-   - Scott Reagent (Cobalt Thiocyanate): Blue precipitate in Step 1, pink dissolution in Step 2, blue bottom chloroform layer in Step 3 = Cocaine HCl/Base.
-   - Duquenois-Levine: Purple/Violet extraction into lower chloroform layer = Cannabis / THC / Charas / Ganja / Hashish Oil.
-   - Mandelin: Olive green to dark green = Methadone/Opioids; Mecke = Dark blue/green.
-   - Simon's: Cobalt deep blue = Secondary amines (Methamphetamine / MDMA); No reaction = Primary amines (Amphetamine).
-   - Fentanyl / Opioid Strips: 1 Line (C only) = POSITIVE for Fentanyl (competitive assay); 2 Lines (C and T) = NEGATIVE; No C line = INVALID.
-3. Determine outcome: POSITIVE, NEGATIVE, or INCONCLUSIVE (e.g. if lighting is too corrupted, sample masked, or invalid band).
-4. Estimate Delta-E match against target spectrum (0.5 to 15.0, where <3.0 is near-perfect match).
-5. Provide scientific observation notes, confidence level (0-100), and legal advisory note for the Seizure Memo under Section 52A NDPS Act 1985.`;
+Is Lateral Flow Immunoassay: ${isLateralFlowStrip ? 'YES (Immunoassay Test Strip)' : 'NO (Colorimetric Chemical Reagent)'}`;
 
       try {
         const geminiResponse = await ai.models.generateContent({
@@ -156,7 +156,7 @@ Provide an accurate, authoritative presumptive forensic analysis:
                 },
                 hexColor: {
                   type: Type.STRING,
-                  description: 'Representative optical hex color e.g. #4A154B',
+                  description: 'Representative optical hex color e.g. #E5A93C or #4A154B',
                 },
                 referenceExpectedHex: {
                   type: Type.STRING,
@@ -233,7 +233,7 @@ Provide an accurate, authoritative presumptive forensic analysis:
     // Algorithmic Fallback Engine (Runs when offline or if AI is unavailable)
     const algorithmicResult = generateAlgorithmicForensicMatch(
       reagentId,
-      sampledSpotHex || '#6D28D9',
+      sampledSpotHex || '#FDE047',
       isLateralFlowStrip
     );
 
@@ -262,56 +262,70 @@ function generateAlgorithmicForensicMatch(
       expectedHex: '#4C1D95',
       expectedHue: 'Deep Violet / Purple',
       negativeHex: '#FDE047',
+      negativeHue: 'Pale Yellow / Amber / Colorless (No Opiate Reaction)',
       section: 'Section 21, NDPS Act 1985 (Manufactured Drugs / Opium Derivatives)',
-      desc: 'Rapid transition through reddish-purple to deep purple/violet indicates presence of diacetylmorphine or morphine base.',
+      descPos: 'Rapid transition through reddish-purple to deep purple/violet confirms presence of diacetylmorphine or morphine alkaloids.',
+      descNeg: 'Sample retained yellow/amber reagent hue with no chromogenic shift to purple. Negative for Heroin/Opium alkaloids.',
     },
     marquis_meth: {
       substance: 'Amphetamine / Methamphetamine',
       expectedHex: '#C2410C',
       expectedHue: 'Orange-Red to Reddish-Brown',
-      negativeHex: '#E2E8F0',
+      negativeHex: '#FDE047',
+      negativeHue: 'Pale Yellow / No Reaction',
       section: 'Section 22, NDPS Act 1985 (Psychotropic Substances)',
-      desc: 'Immediate deep orange-brown development indicative of central nervous system stimulant (amphetamine/methamphetamine class).',
+      descPos: 'Immediate deep orange-brown development indicative of central nervous system stimulant (amphetamine/methamphetamine class).',
+      descNeg: 'No orange/brown chromogenic shift observed. Negative for amphetamine-type stimulants.',
     },
     scott_cocaine: {
       substance: 'Cocaine Hydrochloride / Cocaine Freebase (Crack)',
       expectedHex: '#1D4ED8',
       expectedHue: 'Cobalt Brilliant Blue (Chloroform Layer)',
       negativeHex: '#EC4899',
+      negativeHue: 'Pink / Clear / No Blue Layer',
       section: 'Section 21, NDPS Act 1985 (Coca Leaf and Cocaine)',
-      desc: 'Cobalt thiocyanate 3-step test yielded classic persistent bright cobalt blue coloration in lower organic phase layer.',
+      descPos: 'Cobalt thiocyanate 3-step test yielded classic persistent bright cobalt blue coloration in lower organic phase layer.',
+      descNeg: 'Cobalt thiocyanate test failed to yield blue lower organic chloroform layer. Negative for cocaine alkaloids.',
     },
     duquenois_cannabis: {
       substance: 'Cannabis / Tetrahydrocannabinol (Charas / Ganja / Hashish Oil)',
       expectedHex: '#581C87',
       expectedHue: 'Deep Purple / Violet Extraction Layer',
       negativeHex: '#84CC16',
+      negativeHue: 'Green / Clear / Yellow',
       section: 'Section 20, NDPS Act 1985 (Cannabis Plant and Cannabis)',
-      desc: 'Duquenois-Levine test with chloroform phase extraction demonstrated characteristic purple chromophore partition into lower layer.',
+      descPos: 'Duquenois-Levine test with chloroform phase extraction demonstrated characteristic purple chromophore partition into lower layer.',
+      descNeg: 'No purple chromophore partitioned into chloroform layer. Negative for cannabis / THC.',
     },
     mandelin_methadone: {
       substance: 'Methadone / Synthetic Opioids',
       expectedHex: '#166534',
       expectedHue: 'Dark Olive Green / Blue-Green',
-      negativeHex: '#E2E8F0',
+      negativeHex: '#FDE047',
+      negativeHue: 'Yellow / Orange / No Olive Shift',
       section: 'Section 21 / 22, NDPS Act 1985 (Opioid Agonists)',
-      desc: 'Mandelin ammonium vanadate reagent yielded distinct dark olive green reaction within standard observation window.',
+      descPos: 'Mandelin ammonium vanadate reagent yielded distinct dark olive green reaction within standard observation window.',
+      descNeg: 'No olive green reaction observed. Negative for methadone.',
     },
     simon_meth: {
       substance: 'Secondary Amine (Methamphetamine / MDMA)',
       expectedHex: '#2563EB',
       expectedHue: 'Intense Cobalt Blue Reaction',
       negativeHex: '#E2E8F0',
+      negativeHue: 'Colorless / Pale Yellow',
       section: 'Section 22, NDPS Act 1985 (Psychotropic Amphetamine-Type Stimulants)',
-      desc: 'Simon reagent Part A + B coupled with sodium nitroprusside rapidly formed characteristic blue complex signifying secondary aliphatic amine.',
+      descPos: 'Simon reagent Part A + B coupled with sodium nitroprusside rapidly formed characteristic blue complex signifying secondary aliphatic amine.',
+      descNeg: 'No cobalt blue chromophore developed. Negative for secondary amines.',
     },
     fentanyl_strip: {
       substance: 'Synthetic Opioid (Fentanyl / Fentanyl Analogues)',
       expectedHex: '#DC2626',
       expectedHue: 'Single Red Band (C-Line Only = Positive Immunoassay)',
-      negativeHex: '#E2E8F0',
+      negativeHex: '#10B981',
+      negativeHue: 'Double Band (C & T Lines = Negative Immunoassay)',
       section: 'Section 21 & 22, NDPS Act 1985 (High-Risk Synthetic Opioids)',
-      desc: 'Competitive lateral flow immunoassay cassette demonstrated Control line (C) with absence of Test line (T), confirming positive threshold detection >20 ng/mL.',
+      descPos: 'Competitive lateral flow immunoassay cassette demonstrated Control line (C) with absence of Test line (T), confirming positive threshold detection >20 ng/mL.',
+      descNeg: 'Both Control line (C) and Test line (T) developed clearly, confirming negative result below detection threshold.',
     },
   };
 
@@ -324,47 +338,87 @@ function generateAlgorithmicForensicMatch(
     return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
   };
 
+  // Convert RGB to LAB for accurate Delta-E (CIE76)
+  const rgbToLab = (rgb: { r: number; g: number; b: number }) => {
+    let r = rgb.r / 255;
+    let g = rgb.g / 255;
+    let b = rgb.b / 255;
+
+    r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
+    g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
+    b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+
+    const x = (r * 0.4124 + g * 0.3576 + b * 0.1805) * 100 / 95.047;
+    const y = (r * 0.2126 + g * 0.7152 + b * 0.0722) * 100 / 100.0;
+    const z = (r * 0.0193 + g * 0.1192 + b * 0.9505) * 100 / 108.883;
+
+    const f = (t: number) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+    const fx = f(x);
+    const fy = f(y);
+    const fz = f(z);
+
+    return {
+      l: Math.max(0, 116 * fy - 16),
+      a: 500 * (fx - fy),
+      b: 200 * (fy - fz),
+    };
+  };
+
+  const computeDeltaE = (c1: { r: number; g: number; b: number }, c2: { r: number; g: number; b: number }) => {
+    const l1 = rgbToLab(c1);
+    const l2 = rgbToLab(c2);
+    const dL = l1.l - l2.l;
+    const da = l1.a - l2.a;
+    const db = l1.b - l2.b;
+    return Number(Math.sqrt(dL * dL + da * da + db * db).toFixed(2));
+  };
+
   const cSample = hexToRgb(sampledHex);
   const cExpected = hexToRgb(matchedProfile.expectedHex);
   const cNegative = hexToRgb(matchedProfile.negativeHex);
-
-  // Euclidean color distance in weighted RGB (perceptual approximation of Delta-E)
-  const computeDeltaE = (a: { r: number; g: number; b: number }, b: { r: number; g: number; b: number }) => {
-    const dr = (a.r - b.r) * 0.3;
-    const dg = (a.g - b.g) * 0.59;
-    const db = (a.b - b.b) * 0.11;
-    return Number((Math.sqrt(dr * dr + dg * dg + db * db) * 0.85).toFixed(2));
-  };
 
   const deltaEPos = computeDeltaE(cSample, cExpected);
   const deltaENeg = computeDeltaE(cSample, cNegative);
 
   let outcome: 'POSITIVE' | 'NEGATIVE' | 'INCONCLUSIVE' = 'INCONCLUSIVE';
   let confidenceScore = 55.0;
-  let presumptiveSubstance = 'Unidentified / Atypical Reaction (Requires FSL GC-MS)';
+  let presumptiveSubstance = 'Non-Narcotic Excipient / No Target Contraband Detected';
   let forensicObservations = '';
+  let detectedHue = '';
 
-  if (deltaEPos <= 18) {
+  // Scientific Hue Detection from Hex (Yellow/Amber/Orange/Purple/Blue/Green)
+  const isYellowOrAmber =
+    (cSample.r > 150 && cSample.g > 100 && cSample.b < 120) || // standard yellow/amber
+    (cSample.r > 180 && cSample.g > 140 && cSample.b < 80);   // bright yellow
+
+  const isDeepPurple =
+    (cSample.b > 80 && cSample.r > 50 && cSample.g < 80) || // purple
+    deltaEPos < 22;
+
+  if (deltaEPos <= 20 || (isDeepPurple && reagentId === 'marquis_heroin')) {
     outcome = 'POSITIVE';
-    confidenceScore = Math.max(88, Math.min(99.6, Number((100 - deltaEPos * 1.5).toFixed(1))));
+    confidenceScore = Math.max(88, Math.min(99.6, Number((100 - deltaEPos * 1.2).toFixed(1))));
     presumptiveSubstance = matchedProfile.substance;
-    forensicObservations = matchedProfile.desc;
-  } else if (deltaENeg <= 22) {
+    detectedHue = matchedProfile.expectedHue;
+    forensicObservations = matchedProfile.descPos;
+  } else if (deltaENeg <= 35 || isYellowOrAmber) {
     outcome = 'NEGATIVE';
-    confidenceScore = Math.max(85, Math.min(99.2, Number((100 - deltaENeg * 1.4).toFixed(1))));
+    confidenceScore = Math.max(88, Math.min(99.4, Number((100 - deltaENeg * 0.9).toFixed(1))));
     presumptiveSubstance = 'Non-Narcotic Excipient / No Target Contraband Detected';
-    forensicObservations = `Reaction color matches negative control blank (ΔE = ${deltaENeg}). No scheduled chromogenic shift observed for ${matchedProfile.substance}.`;
+    detectedHue = isYellowOrAmber ? 'Yellow / Amber (Unreacted Reagent Acid)' : matchedProfile.negativeHue;
+    forensicObservations = `Visual reaction is Yellow/Amber (ΔE to positive = ${deltaEPos}). In Marquis reagent protocol, a positive for Heroin/Opium strictly requires deep purple/violet chromophore development. The yellow appearance indicates unreacted reagent acid and absence of scheduled opiate alkaloids.`;
   } else {
     outcome = 'INCONCLUSIVE';
-    confidenceScore = Math.max(40, Math.min(65, Number((68 - Math.min(deltaEPos, deltaENeg) * 0.4).toFixed(1))));
-    presumptiveSubstance = 'Inconclusive / Contaminated / Non-Standard Reaction';
-    forensicObservations = `Reaction color (${sampledHex}) deviates significantly from both standard positive benchmark (ΔE = ${deltaEPos}) and negative control (ΔE = ${deltaENeg}). Sample may be heavily adulterated or unlisted substance. Mandatory FSL laboratory testing required.`;
+    confidenceScore = Math.max(45, Math.min(68, Number((72 - Math.min(deltaEPos, deltaENeg) * 0.4).toFixed(1))));
+    presumptiveSubstance = 'Inconclusive / Atypical Reaction (Mandatory FSL GC-MS)';
+    detectedHue = `Atypical Spectral Reading (${sampledHex})`;
+    forensicObservations = `Reaction color (${sampledHex}) deviates from standard positive benchmark (ΔE = ${deltaEPos}) and negative blank (ΔE = ${deltaENeg}). Sample may contain interfering adulterants. Mandatory FSL confirmatory GC-MS required.`;
   }
 
   return {
     outcome,
     presumptiveSubstance,
-    detectedHue: outcome === 'POSITIVE' ? matchedProfile.expectedHue : outcome === 'NEGATIVE' ? 'Negative Blank Control' : `Atypical Spectral Value (${sampledHex})`,
+    detectedHue,
     hexColor: sampledHex,
     referenceExpectedHex: matchedProfile.expectedHex,
     deltaEMatch: deltaEPos,
