@@ -230,7 +230,12 @@ export async function generateCourtReadyPdf(caseData: CaseRecord): Promise<void>
     y += 7.5;
 
     try {
-      doc.addImage(caseData.rawImage, 'JPEG', margin + 6, y, 46, 32);
+      const imgType = caseData.rawImage.includes('image/png')
+        ? 'PNG'
+        : caseData.rawImage.includes('image/svg')
+        ? 'SVG'
+        : 'JPEG';
+      doc.addImage(caseData.rawImage, imgType, margin + 6, y, 46, 32);
       doc.setDrawColor(15, 23, 42);
       doc.rect(margin + 6, y, 46, 32);
 
@@ -238,7 +243,7 @@ export async function generateCourtReadyPdf(caseData: CaseRecord): Promise<void>
       doc.setTextColor(100, 116, 139);
       doc.text('Raw Capture with In-Frame Calibration', margin + 6, y + 35);
     } catch (e) {
-      console.warn('PDF image embedding skipped:', e);
+      console.warn('PDF image embedding skipped or fallback used:', e);
     }
 
     // QR Code Stamp on right side
